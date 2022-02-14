@@ -17,13 +17,15 @@ import os
 
 # data
 #TRAINING_DATA_FILE = "data/ETF_SPY_2009_2020.csv"
-TRAINING_DATA_FILE = "data/dow_30_2009_2020.csv"
+# TRAINING_DATA_FILE = "data/dow_30_2009_2020.csv"
+# TRAINING_DATA_FILE = './data/crypto_full_data.csv'
+TRAINING_DATA_FILE = './data/crypto_only_full.csv'
 
-now = datetime.datetime.now()
+now = str(datetime.datetime.now()).replace(' ', '_').replace(':', '_').split('.')[0]
 TRAINED_MODEL_DIR = f"trained_models/{now}"
 os.makedirs(TRAINED_MODEL_DIR)
-TURBULENCE_DATA = "data/dow30_turbulence_index.csv"
-
+# TURBULENCE_DATA = "data/dow30_turbulence_index.csv"
+#
 TESTING_DATA_FILE = "test.csv"
-
-
+#
+#

@@ -125,6 +125,15 @@ def calcualte_turbulence(df):
     unique_date = df.datadate.unique()
     # start after a year
     start = 252
+
+    # CHANGING THE YEAR LENGTH FOR CRYPTO
+    # start = 365
+
+
+
+
+
+
     turbulence_index = [0]*start
     #turbulence_index = [0]
     count=0

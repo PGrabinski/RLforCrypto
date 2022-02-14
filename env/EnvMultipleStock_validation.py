@@ -14,7 +14,8 @@ HMAX_NORMALIZE = 100
 # initial amount of money we have in our account
 INITIAL_ACCOUNT_BALANCE=1000000
 # total number of stocks in our portfolio
-STOCK_DIM = 30
+# STOCK_DIM = 30
+STOCK_DIM = 7
 # transaction fee: 1/1000 reasonable percentage
 TRANSACTION_FEE_PERCENT = 0.001
 
@@ -35,7 +36,13 @@ class StockEnvValidation(gym.Env):
         self.action_space = spaces.Box(low = -1, high = 1,shape = (STOCK_DIM,)) 
         # Shape = 181: [Current Balance]+[prices 1-30]+[owned shares 1-30] 
         # +[macd 1-30]+ [rsi 1-30] + [cci 1-30] + [adx 1-30]
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape = (181,))
+
+
+        # CHANGING THE HARDCODED VARIABLE
+        # self.observation_space = spaces.Box(low=0, high=np.inf, shape = (181,))
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape = (1 + STOCK_DIM * 6,))
+
+
         # load data from a pandas dataframe
         self.data = self.df.loc[self.day,:]
         self.terminal = False     
@@ -147,7 +154,17 @@ class StockEnvValidation(gym.Env):
         else:
             # print(np.array(self.state[1:29]))
 
-            actions = actions * HMAX_NORMALIZE
+            # actions = actions * HMAX_NORMALIZE
+            # print(np.array(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)]))
+            if sum(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)]) != 0.:
+                nonzero_multipliers = np.array(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)]) != 0.
+                # print('nonzero_multipliers', nonzero_multipliers)
+                multipliers = np.ones_like(actions)
+                # print('multipliers size', multipliers.shape)
+                multipliers[nonzero_multipliers] *= 0.2 * self.state[0] / np.array(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)])[nonzero_multipliers]
+                # print('multipliers', multipliers)
+                actions *= multipliers
+                actions[np.logical_not(nonzero_multipliers)] = 0.
             #actions = (actions.astype(int))
             if self.turbulence>=self.turbulence_threshold:
                 actions=np.array([-HMAX_NORMALIZE]*STOCK_DIM)

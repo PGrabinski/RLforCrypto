@@ -14,10 +14,19 @@ HMAX_NORMALIZE = 100
 # initial amount of money we have in our account
 INITIAL_ACCOUNT_BALANCE=1000000
 # total number of stocks in our portfolio
-STOCK_DIM = 30
+# STOCK_DIM = 30
+STOCK_DIM = 7
 # transaction fee: 1/1000 reasonable percentage
 TRANSACTION_FEE_PERCENT = 0.001
 REWARD_SCALING = 1e-4
+
+# ADDING YEAR LENGTH
+
+# YEAR_LENGTH = 252
+YEAR_LENGTH = 365
+
+
+
 
 class StockEnvTrain(gym.Env):
     """A stock trading environment for OpenAI gym"""
@@ -33,7 +42,13 @@ class StockEnvTrain(gym.Env):
         self.action_space = spaces.Box(low = -1, high = 1,shape = (STOCK_DIM,)) 
         # Shape = 181: [Current Balance]+[prices 1-30]+[owned shares 1-30] 
         # +[macd 1-30]+ [rsi 1-30] + [cci 1-30] + [adx 1-30]
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape = (181,))
+
+
+
+        # CHANGING THE HARDCODED VARIABLE
+        # self.observation_space = spaces.Box(low=0, high=np.inf, shape = (181,))
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape = (1 + STOCK_DIM * 6,))
+
         # load data from a pandas dataframe
         self.data = self.df.loc[self.day,:]
         self.terminal = False             
@@ -46,6 +61,16 @@ class StockEnvTrain(gym.Env):
                       self.data.cci.values.tolist() + \
                       self.data.adx.values.tolist()
         # initialize reward
+
+
+        # ADDED ASSERTION LINE
+        # print(len([INITIAL_ACCOUNT_BALANCE]), len(self.data.adjcp.values.tolist()), len([0]*STOCK_DIM),
+        #       len(self.data.macd.values.tolist()), len(self.data.rsi.values.tolist()), len(self.data.cci.values.tolist()),
+        #         len(self.data.adx.values.tolist()))
+        # print(len(self.state), 1 + STOCK_DIM * 6)
+        # print(df.tic.unique(), len(df.tic.unique()))
+        # assert len(self.state) == 1 + STOCK_DIM * 6
+
         self.reward = 0
         self.cost = 0
         # memorize all the total balance change
@@ -107,7 +132,7 @@ class StockEnvTrain(gym.Env):
             #print("total_trades: ", self.trades)
             df_total_value.columns = ['account_value']
             df_total_value['daily_return']=df_total_value.pct_change(1)
-            sharpe = (252**0.5)*df_total_value['daily_return'].mean()/ \
+            sharpe = (YEAR_LENGTH**0.5)*df_total_value['daily_return'].mean()/ \
                   df_total_value['daily_return'].std()
             #print("Sharpe: ",sharpe)
             #print("=================================")
@@ -123,7 +148,21 @@ class StockEnvTrain(gym.Env):
         else:
             # print(np.array(self.state[1:29]))
 
-            actions = actions * HMAX_NORMALIZE
+            # actions = actions * HMAX_NORMALIZE
+            # print('prices len', len(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)]))
+            # print('actions len', actions.shape)
+            if sum(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)]) != 0.:
+                nonzero_multipliers = np.array(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)]) != 0.
+                # print('nonzero_multipliers', nonzero_multipliers)
+                multipliers = np.ones_like(actions)
+                # print('multipliers size', multipliers.shape)
+                multipliers[nonzero_multipliers] *= 0.2 * self.state[0] / np.array(self.state[(STOCK_DIM + 1):(STOCK_DIM * 2 + 1)])[nonzero_multipliers]
+                # print('multipliers', multipliers)
+                actions *= multipliers
+                actions[np.logical_not(nonzero_multipliers)] = 0.
+            # print('actions', actions)
+
+            # assert False
             #actions = (actions.astype(int))
             
             begin_total_asset = self.state[0]+ \
