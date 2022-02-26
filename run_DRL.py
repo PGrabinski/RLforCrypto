@@ -25,8 +25,8 @@ BEGINING_TEST_DATE = 20210901
 END_TEST_DATE = 20220201
 
 
-rebalance_window = 3
-validation_window = 3
+rebalance_window = 30
+validation_window = 30
 
 def run_model() -> None:
     """Train the model."""
